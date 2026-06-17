@@ -6,7 +6,7 @@ No monthly fees. No cookie scanner theater. No enterprise compliance suite — j
 
 Built for indie hackers, solo founders, and static marketing sites that only need to gate Google Analytics (and a few scripts you configure yourself).
 
-> **Support the project:** if PlainConsent saves you money vs Cookiebot, [buy us a coffee](https://buymeacoffee.com/luigipascal) ☕  
+> **Support the project:** if PlainConsent saves you money vs Cookiebot, [support us on Ko-fi](https://ko-fi.com/bertaone) ☕  
 > PlainConsent is MIT-licensed — free forever. Coffee helps keep it maintained.
 
 ## What it does
@@ -16,7 +16,7 @@ Built for indie hackers, solo founders, and static marketing sites that only nee
 - Sets **Google Consent Mode v2** defaults to `denied` before consent
 - Stores the choice in `localStorage` (configurable key)
 - Provides a **Cookie settings** link to reopen the banner
-- Shows a small **“buy us a coffee”** credit (disable in config if you prefer)
+- Shows a small **Ko-fi support** credit (disable in config if you prefer)
 
 ## What it does *not* do
 
@@ -75,7 +75,7 @@ Set `window.plainConsentConfig` **before** loading `plainconsent.js`:
     },
     credit: {
       show: true,
-      coffeeUrl: "https://buymeacoffee.com/luigipascal",
+      coffeeUrl: "https://ko-fi.com/bertaone",
     },
     scripts: [
       {
@@ -106,7 +106,7 @@ Set `window.plainConsentConfig` **before** loading `plainconsent.js`:
 | `googleAnalyticsId` | `""` | GA4 measurement ID |
 | `consentMode` | `true` | Google Consent Mode v2 |
 | `credit.show` | `true` | Show coffee credit line |
-| `credit.coffeeUrl` | Buy Me a Coffee link | Donation URL |
+| `credit.coffeeUrl` | Ko-fi link | Donation URL |
 | `noStyles` | `false` | Skip auto-loading CSS (bring your own) |
 
 ## JavaScript API
@@ -152,6 +152,6 @@ MIT — see [LICENSE](LICENSE).
 
 ## Support
 
-- [Buy us a coffee](https://buymeacoffee.com/luigipascal)
+- [Support us on Ko-fi](https://ko-fi.com/bertaone)
 - [GitHub Sponsors](https://github.com/sponsors/luigipascal) (if enabled)
 - Issues and PRs welcome

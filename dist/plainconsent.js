@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
 
-  var DEFAULT_COFFEE_URL = "https://buymeacoffee.com/luigipascal";
+  var DEFAULT_COFFEE_URL = "https://ko-fi.com/bertaone";
   var DEFAULT_STORAGE_KEY = "plainconsent";
   var SETTINGS_SELECTOR = "[data-plainconsent-settings],[data-cookie-settings]";
 
@@ -20,7 +20,7 @@
       reject: "Essential only",
       credit: "Consent by {name} — free & open source — {coffee}",
       creditName: "PlainConsent",
-      creditCoffee: "buy us a coffee",
+      creditCoffee: "support us on Ko-fi",
     },
     credit: {
       show: true,
