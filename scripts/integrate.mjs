@@ -26,8 +26,31 @@ const GTAG_BLOCK =
   /<!--\s*Google tag \(gtag\.js\)\s*-->[\s\S]*?<!--\s*End Google tag \(gtag\.js\)\s*-->\s*/gi;
 const GTAG_BLOCK_NO_END =
   /<script[^>]*googletagmanager\.com\/gtag\/js[^>]*><\/script>\s*<script>[\s\S]*?gtag\s*\(\s*['"]config['"][\s\S]*?<\/script>\s*/gi;
+const GTAG_CONSENT_MODE =
+  /<!--\s*Google Analytics with Consent Mode\s*-->[\s\S]*?<script async src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^"]*"><\/script>\s*/gi;
+const GTAG_INLINE_BEFORE_SRC =
+  /<script>\s*window\.dataLayer[\s\S]*?gtag\s*\(\s*['"]config['"][\s\S]*?<\/script>\s*<script async src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^>]*><\/script>\s*/gi;
+const GTAG_ORPHAN_COMMENT = /<!--\s*Google tag \(gtag\.js\)\s*-->\s*/gi;
 const HOMEMADE_BANNER =
   /<!--\s*Cookie Banner\s*-->[\s\S]*?<!--\s*End Cookie Banner\s*-->\s*/gi;
+const HOMEMADE_BANNER2 =
+  /<!--\s*Cookie Consent Banner\s*-->[\s\S]*?(?=<!--|<\/head>|<\/body)/gi;
+
+function stripLegacyGtag(html) {
+  let next = html;
+  next = next.replace(GTAG_BLOCK, "");
+  next = next.replace(GTAG_BLOCK_NO_END, "");
+  next = next.replace(GTAG_CONSENT_MODE, "");
+  next = next.replace(GTAG_INLINE_BEFORE_SRC, "");
+  next = next.replace(GTAG_ORPHAN_COMMENT, "");
+  next = next.replace(HOMEMADE_BANNER, "");
+  next = next.replace(HOMEMADE_BANNER2, "");
+  GTAG_BLOCK.lastIndex = 0;
+  GTAG_BLOCK_NO_END.lastIndex = 0;
+  GTAG_CONSENT_MODE.lastIndex = 0;
+  GTAG_INLINE_BEFORE_SRC.lastIndex = 0;
+  return next;
+}
 const PLAINCONSENT_MARK = "plainconsent.js";
 
 function slugFromPath(root, filePath) {
@@ -80,28 +103,36 @@ function buildSnippet({ storageKey, privacyUrl, gaIds }) {
 }
 
 function integrateHtml(root, filePath, html) {
+  const hadPlainConsent =
+    html.includes(PLAINCONSENT_MARK) || html.includes("plainConsentConfig");
+  const gaIdsBefore = extractGaIds(html);
+  let next = stripLegacyGtag(html);
+
+  if (hadPlainConsent && !extractGaIds(next).length && !gaIdsBefore.length) {
+    return next !== html ? { changed: true, gaIds: [], html: next, cleanup: true } : { changed: false, reason: "already-integrated" };
+  }
+
+  if (hadPlainConsent && gaIdsBefore.length) {
+    return next !== html
+      ? { changed: true, gaIds: gaIdsBefore, html: next, cleanup: true }
+      : { changed: false, reason: "already-integrated" };
+  }
+
   if (html.includes(PLAINCONSENT_MARK) || html.includes("plainConsentConfig")) {
     return { changed: false, reason: "already-integrated" };
   }
-  const gaIds = extractGaIds(html);
+  const gaIds = extractGaIds(next);
   const hadGtag =
-    GTAG_BLOCK.test(html) ||
-    GTAG_BLOCK_NO_END.test(html) ||
+    gaIdsBefore.length > 0 ||
+    next.includes("googletagmanager.com/gtag/js") ||
     html.includes("googletagmanager.com/gtag/js");
-  GTAG_BLOCK.lastIndex = 0;
-  GTAG_BLOCK_NO_END.lastIndex = 0;
 
   if (!gaIds.length && !hadGtag) {
-    return { changed: false, reason: "no-gtag" };
+    return next !== html ? { changed: true, gaIds: [], html: next, cleanup: true } : { changed: false, reason: "no-gtag" };
   }
 
-  let next = html;
-  next = next.replace(GTAG_BLOCK, "");
-  next = next.replace(GTAG_BLOCK_NO_END, "");
-  next = next.replace(HOMEMADE_BANNER, "");
-
   if (!gaIds.length) {
-    return { changed: false, reason: "no-ga-id" };
+    return next !== html ? { changed: true, gaIds: [], html: next, cleanup: true } : { changed: false, reason: "no-ga-id" };
   }
 
   const snippet = buildSnippet({
