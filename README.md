@@ -2,7 +2,7 @@
 
 **Free, open-source cookie consent for normal websites.**
 
-**Website:** [luigipascal.github.io/plainconsent](https://luigipascal.github.io/plainconsent/) · **Netlify:** build `npm run build`, publish `public/`
+**Website:** [plainconsent.berta.one](https://plainconsent.berta.one)  
 **Repository:** [github.com/luigipascal/plainconsent](https://github.com/luigipascal/plainconsent)
 
 No monthly fees. No cookie scanner theater. No enterprise compliance suite — just a clear banner, script blocking until opt-in, and Google Consent Mode v2 defaults.
@@ -21,7 +21,7 @@ Every banner shows: **Powered by PlainConsent — free forever for small sites �
 - Sets **Google Consent Mode v2** defaults to `denied` before consent
 - Stores the choice in `localStorage` (configurable key)
 - Provides a **Cookie settings** link to reopen the banner
-- Links to the GitHub project and optional **Ko-fi** support line
+- Links to [plainconsent.berta.one](https://plainconsent.berta.one) and optional **Ko-fi** support line
 
 ## What it does *not* do
 
@@ -35,22 +35,22 @@ Every banner shows: **Powered by PlainConsent — free forever for small sites �
 ### CDN (recommended)
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.css" />
+<link rel="stylesheet" href="https://plainconsent.berta.one/dist/plainconsent.css" />
 <script>
   window.plainConsentConfig = {
     privacyUrl: "/privacy.html",
     googleAnalyticsId: "G-XXXXXXXXXX",
-    projectUrl: "https://github.com/luigipascal/plainconsent",
+    projectUrl: "https://plainconsent.berta.one",
   };
 </script>
-<script src="https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.js" defer></script>
+<script src="https://plainconsent.berta.one/dist/plainconsent.js" defer></script>
 ```
 
 ### Download
 
-- [plainconsent.js](dist/plainconsent.js)
-- [plainconsent.css](dist/plainconsent.css)
-- [Marketing / demo page](docs/index.html)
+- [plainconsent.js](https://plainconsent.berta.one/dist/plainconsent.js)
+- [plainconsent.css](https://plainconsent.berta.one/dist/plainconsent.css)
+- [Marketing / demo page](https://plainconsent.berta.one)
 
 ### Footer link
 
@@ -70,7 +70,7 @@ Every banner shows: **Powered by PlainConsent — free forever for small sites �
     googleAnalyticsId: "G-XXXXXXXXXX",
     googleAnalyticsIds: ["G-AAA", "G-BBB"],
     googleAnalyticsOptions: { anonymize_ip: true },
-    projectUrl: "https://github.com/luigipascal/plainconsent",
+    projectUrl: "https://plainconsent.berta.one",
     consentMode: true,
     credit: {
       show: true,
@@ -86,7 +86,7 @@ Every banner shows: **Powered by PlainConsent — free forever for small sites �
 | `storageKey` | `plainconsent` | localStorage key |
 | `googleAnalyticsId` | `""` | Single GA4 ID |
 | `googleAnalyticsIds` | `[]` | Multiple GA4 IDs |
-| `projectUrl` | GitHub repo | Linked from “Powered by PlainConsent” |
+| `projectUrl` | plainconsent.berta.one | Linked from “Powered by PlainConsent” |
 | `credit.show` | `true` | Show support line |
 | `credit.coffeeUrl` | Ko-fi | Donation URL |
 

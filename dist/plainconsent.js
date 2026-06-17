@@ -2,7 +2,7 @@
   "use strict";
 
   var DEFAULT_COFFEE_URL = "https://ko-fi.com/bertaone";
-  var DEFAULT_PROJECT_URL = "https://github.com/luigipascal/plainconsent";
+  var DEFAULT_PROJECT_URL = "https://plainconsent.berta.one";
   var DEFAULT_STORAGE_KEY = "plainconsent";
   var SETTINGS_SELECTOR = "[data-plainconsent-settings],[data-cookie-settings]";
 

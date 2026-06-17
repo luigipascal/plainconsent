@@ -6,11 +6,10 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 
-const CDN_CSS =
-  "https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.css";
-const CDN_JS =
-  "https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.js";
-const PROJECT_URL = "https://github.com/luigipascal/plainconsent";
+const SITE_URL = "https://plainconsent.berta.one";
+const CDN_CSS = `${SITE_URL}/dist/plainconsent.css`;
+const CDN_JS = `${SITE_URL}/dist/plainconsent.js`;
+const PROJECT_URL = SITE_URL;
 
 const SKIP_DIRS = new Set([
   "node_modules",
@@ -88,7 +87,7 @@ function buildSnippet({ storageKey, privacyUrl, gaIds }) {
       ? `googleAnalyticsId: ${idsJson},`
       : `googleAnalyticsIds: ${JSON.stringify(gaIds)},`;
   return (
-    `<!-- PlainConsent — https://github.com/luigipascal/plainconsent -->\n` +
+    `<!-- PlainConsent — ${SITE_URL} -->\n` +
     `    <link rel="stylesheet" href="${CDN_CSS}" />\n` +
     `    <script>\n` +
     `      window.plainConsentConfig = {\n` +
