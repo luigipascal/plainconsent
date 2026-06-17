@@ -308,25 +308,38 @@
   }
 
   function init() {
-    var config = resolveConfig();
+    try {
+      if (!document.body) {
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", init, { once: true });
+        }
+        return;
+      }
 
-    if (config.consentMode) setConsentModeDefault(ensureDataLayer());
-    if (!config.noStyles) injectStylesheet();
+      var config = resolveConfig();
 
-    var consent = readConsent(config.storageKey);
-    var banner = createBanner(config, function (accept) {
-      saveConsent(config.storageKey, accept);
-      applyConsent(config, { analytics: accept });
-    });
+      if (config.consentMode) setConsentModeDefault(ensureDataLayer());
+      if (!config.noStyles) injectStylesheet();
 
-    bindSettingsLink(banner);
+      var consent = readConsent(config.storageKey);
+      var banner = createBanner(config, function (accept) {
+        saveConsent(config.storageKey, accept);
+        applyConsent(config, { analytics: accept });
+      });
 
-    if (consent) {
-      applyConsent(config, consent);
-      return;
+      bindSettingsLink(banner);
+
+      if (consent) {
+        applyConsent(config, consent);
+        return;
+      }
+
+      showBanner(banner);
+    } catch (err) {
+      if (typeof console !== "undefined" && console.error) {
+        console.error("[PlainConsent] init failed:", err);
+      }
     }
-
-    showBanner(banner);
   }
 
   global.PlainConsent = {
@@ -338,7 +351,7 @@
       var config = resolveConfig();
       return readConsent(config.storageKey);
     },
-    version: "1.1.1",
+    version: "1.1.2",
   };
 
   if (document.readyState === "loading") {

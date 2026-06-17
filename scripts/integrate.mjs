@@ -137,33 +137,30 @@ function buildSnippet({ storageKey, privacyUrl, gaIds }) {
     `      window.plainConsentConfig = {\n` +
     `        privacyUrl: "${privacyUrl}",\n` +
     `        storageKey: "${storageKey}",\n` +
-    `        ${idField}\n` +
-    `        projectUrl: "${PROJECT_URL}",\n` +
+        `        ${idField}\n` +
+        `        projectUrl: "${PROJECT_URL}"\n` +
     `      };\n` +
     `    </script>\n` +
     `    <script src="${CDN_JS}" defer></script>\n`
   );
 }
 
-function integrateHtml(root, filePath, html) {
+function integrateHtml(root, filePath, html, options) {
+  const keysOnly = options && options.keysOnly;
+  if (keysOnly) {
+    return fixStorageKeyHtml(root, html);
+  }
+
   const hadPlainConsent =
     html.includes(PLAINCONSENT_MARK) || html.includes("plainConsentConfig");
-  const gaIdsBefore = extractGaIds(html);
-  let next = stripLegacyGtag(html);
-
-  if (hadPlainConsent && !extractGaIds(next).length && !gaIdsBefore.length) {
-    return next !== html ? { changed: true, gaIds: [], html: next, cleanup: true } : { changed: false, reason: "already-integrated" };
-  }
-
-  if (hadPlainConsent && gaIdsBefore.length) {
-    return next !== html
-      ? { changed: true, gaIds: gaIdsBefore, html: next, cleanup: true }
-      : { changed: false, reason: "already-integrated" };
-  }
-
-  if (html.includes(PLAINCONSENT_MARK) || html.includes("plainConsentConfig")) {
+  if (hadPlainConsent) {
+    const keyFix = fixStorageKeyHtml(root, html);
+    if (keyFix.changed) return { changed: true, html: keyFix.html, keyFix: keyFix.from };
     return { changed: false, reason: "already-integrated" };
   }
+
+  const gaIdsBefore = extractGaIds(html);
+  let next = stripLegacyGtag(html);
   const gaIds = extractGaIds(next);
   const hadGtag =
     gaIdsBefore.length > 0 ||
@@ -206,35 +203,89 @@ async function walk(dir, files = []) {
   return files;
 }
 
+function fixCdnUrls(html) {
+  if (!html.includes("plainconsent") && !html.includes("plainConsent")) {
+    return { changed: false, html };
+  }
+  let next = html;
+  next = next.replace(
+    /https:\/\/cdn\.jsdelivr\.net\/gh\/luigipascal\/plainconsent@main\/dist\//g,
+    `${SITE_URL}/dist/`
+  );
+  next = next.replace(
+    /<!-- PlainConsent — https:\/\/github\.com\/luigipascal\/plainconsent -->/g,
+    `<!-- PlainConsent — ${SITE_URL} -->`
+  );
+  next = next.replace(
+    /projectUrl:\s*"https:\/\/github\.com\/luigipascal\/plainconsent"/g,
+    `projectUrl: "${PROJECT_URL}"`
+  );
+  // Remove trailing commas before closing brace in config (older WebViews).
+  next = next.replace(
+    /(window\.plainConsentConfig\s*=\s*\{[\s\S]*?),\s*\n(\s*\};)/g,
+    "$1\n$2"
+  );
+  return next === html ? { changed: false, html } : { changed: true, html: next };
+}
+
 async function main() {
   const root = process.argv[2];
   const dryRun = process.argv.includes("--dry-run");
+  const cdnOnly = process.argv.includes("--cdn-only");
   if (!root) {
     console.error("Usage: node scripts/integrate.mjs <directory> [--dry-run]");
     process.exit(1);
   }
 
   const files = await walk(root);
-  let changed = 0;
+  let changedCount = 0;
   for (const file of files) {
     const html = await readFile(file, "utf8");
-    let result = integrateHtml(root, file, html);
-    let htmlOut = result.html ?? html;
-    const keyFix = fixStorageKeyHtml(root, htmlOut);
-    if (keyFix.changed) {
-      htmlOut = keyFix.html;
-      result = { changed: true, html: htmlOut, gaIds: result.gaIds || [], keyFix: keyFix.from };
+    let htmlOut = html;
+    let changed = false;
+    let note = "";
+
+    if (cdnOnly) {
+      const cdnFix = fixCdnUrls(htmlOut);
+      if (cdnFix.changed) {
+        htmlOut = cdnFix.html;
+        changed = true;
+        note = " (cdn-urls)";
+      }
+      const keyFix = fixStorageKeyHtml(root, htmlOut);
+      if (keyFix.changed) {
+        htmlOut = keyFix.html;
+        changed = true;
+        note += ` (storageKey: ${keyFix.from} → ${keyFix.to})`;
+      }
+    } else {
+      let result = integrateHtml(root, file, htmlOut);
+      htmlOut = result.html ?? htmlOut;
+      if (result.changed) {
+        changed = true;
+        if (result.keyFix) note = ` (storageKey: ${result.keyFix} → ${siteStorageKey(root)})`;
+      }
+      const cdnFix = fixCdnUrls(htmlOut);
+      if (cdnFix.changed) {
+        htmlOut = cdnFix.html;
+        changed = true;
+        note += " (cdn-urls)";
+      }
+      const keyFix = fixStorageKeyHtml(root, htmlOut);
+      if (keyFix.changed) {
+        htmlOut = keyFix.html;
+        changed = true;
+        note += ` (storageKey: ${keyFix.from} → ${keyFix.to})`;
+      }
     }
-    if (result.changed) {
-      changed += 1;
-      const note = result.keyFix ? ` (storageKey: ${result.keyFix} → ${siteStorageKey(root)})` : "";
-      console.log(
-        `${dryRun ? "[dry-run] " : ""}updated: ${relative(root, file)}${note}`
-      );
+
+    if (changed) {
+      changedCount += 1;
+      console.log(`${dryRun ? "[dry-run] " : ""}updated: ${relative(root, file)}${note}`);
       if (!dryRun) await writeFile(file, htmlOut, "utf8");
     }
   }
-  console.log(`Done. ${changed} file(s) ${dryRun ? "would be " : ""}updated under ${root}`);
+  console.log(`Done. ${changedCount} file(s) ${dryRun ? "would be " : ""}updated under ${root}`);
 }
 
 main().catch((err) => {
