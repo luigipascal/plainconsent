@@ -2,7 +2,7 @@
 
 **Free, open-source cookie consent for normal websites.**
 
-**Website:** [luigipascal.github.io/plainconsent](https://luigipascal.github.io/plainconsent/docs/) (GitHub Pages)  
+**Website:** [luigipascal.github.io/plainconsent](https://luigipascal.github.io/plainconsent/)
 **Repository:** [github.com/luigipascal/plainconsent](https://github.com/luigipascal/plainconsent)
 
 No monthly fees. No cookie scanner theater. No enterprise compliance suite — just a clear banner, script blocking until opt-in, and Google Consent Mode v2 defaults.
