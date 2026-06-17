@@ -4,7 +4,7 @@
  * Usage: node scripts/integrate.mjs <directory> [--dry-run]
  */
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 
 const SITE_URL = "https://plainconsent.berta.one";
 const CDN_CSS = `${SITE_URL}/dist/plainconsent.css`;
@@ -52,6 +52,17 @@ function stripLegacyGtag(html) {
 }
 const PLAINCONSENT_MARK = "plainconsent.js";
 
+function siteStorageKey(root) {
+  const base = basename(String(root).replace(/\\/g, "/").replace(/\/$/, ""));
+  if (!base) return "site-consent";
+  const slug = base
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  return `${slug}-consent`.slice(0, 64);
+}
+
+/** @deprecated Per-page keys caused the banner on every navigation. */
 function slugFromPath(root, filePath) {
   return relative(root, filePath)
     .replace(/\\/g, "/")
@@ -59,6 +70,39 @@ function slugFromPath(root, filePath) {
     .replace(/^-+|-+$/g, "")
     .toLowerCase()
     .slice(0, 48);
+}
+
+function isPerPageStorageKey(key) {
+  return typeof key === "string" && /-html$/i.test(key);
+}
+
+function shouldNormalizeStorageKey(current, siteKey) {
+  if (!current || current === siteKey) return false;
+  if (current.endsWith("-consent")) return false;
+  if (current.endsWith("-site") || current.endsWith("-demo")) return false;
+  if (isPerPageStorageKey(current)) return true;
+  return true;
+}
+
+function extractStorageKey(html) {
+  const match = html.match(/storageKey:\s*["']([^"']+)["']/);
+  return match ? match[1] : null;
+}
+
+function fixStorageKeyHtml(root, html) {
+  if (!html.includes("plainConsentConfig")) {
+    return { changed: false, html };
+  }
+  const current = extractStorageKey(html);
+  const siteKey = siteStorageKey(root);
+  if (!shouldNormalizeStorageKey(current, siteKey)) {
+    return { changed: false, html };
+  }
+  const next = html.replace(
+    /storageKey:\s*["'][^"']+["']/,
+    `storageKey: "${siteKey}"`
+  );
+  return { changed: true, html: next, from: current, to: siteKey };
 }
 
 function extractGaIds(html) {
@@ -135,7 +179,7 @@ function integrateHtml(root, filePath, html) {
   }
 
   const snippet = buildSnippet({
-    storageKey: slugFromPath(root, filePath) || "site-consent",
+    storageKey: siteStorageKey(root),
     privacyUrl: guessPrivacyUrl(filePath),
     gaIds,
   });
@@ -174,11 +218,20 @@ async function main() {
   let changed = 0;
   for (const file of files) {
     const html = await readFile(file, "utf8");
-    const result = integrateHtml(root, file, html);
+    let result = integrateHtml(root, file, html);
+    let htmlOut = result.html ?? html;
+    const keyFix = fixStorageKeyHtml(root, htmlOut);
+    if (keyFix.changed) {
+      htmlOut = keyFix.html;
+      result = { changed: true, html: htmlOut, gaIds: result.gaIds || [], keyFix: keyFix.from };
+    }
     if (result.changed) {
       changed += 1;
-      console.log(`${dryRun ? "[dry-run] " : ""}updated: ${relative(root, file)} (${result.gaIds.join(", ")})`);
-      if (!dryRun) await writeFile(file, result.html, "utf8");
+      const note = result.keyFix ? ` (storageKey: ${result.keyFix} → ${siteStorageKey(root)})` : "";
+      console.log(
+        `${dryRun ? "[dry-run] " : ""}updated: ${relative(root, file)}${note}`
+      );
+      if (!dryRun) await writeFile(file, htmlOut, "utf8");
     }
   }
   console.log(`Done. ${changed} file(s) ${dryRun ? "would be " : ""}updated under ${root}`);
