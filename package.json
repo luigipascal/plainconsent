@@ -1,0 +1,20 @@
+{
+  "name": "plainconsent",
+  "version": "1.0.0",
+  "description": "Free, open-source cookie consent for normal websites",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luigipascal/plainconsent.git"
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepublishOnly": "npm run build"
+  }
+}

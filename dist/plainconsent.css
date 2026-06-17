@@ -1,0 +1,128 @@
+/* PlainConsent — default banner styles (override via CSS variables) */
+:root {
+  --pc-bg: #121820;
+  --pc-border: #243044;
+  --pc-text: #e8eef7;
+  --pc-muted: #8b9cb3;
+  --pc-accent: #3b82f6;
+  --pc-accent-text: #fff;
+  --pc-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.plainconsent {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483000;
+  padding: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.plainconsent.is-visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.plainconsent-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 18px 20px;
+  border: 1px solid var(--pc-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pc-bg) 96%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--pc-shadow);
+  color: var(--pc-text);
+}
+
+.plainconsent-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.plainconsent-desc {
+  margin: 0;
+  color: var(--pc-muted);
+  font-size: 14px;
+}
+
+.plainconsent-desc a {
+  color: var(--pc-accent);
+}
+
+.plainconsent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.plainconsent-btn {
+  appearance: none;
+  border: 1px solid var(--pc-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--pc-text);
+}
+
+.plainconsent-btn:hover {
+  border-color: var(--pc-muted);
+}
+
+.plainconsent-btn-primary {
+  background: var(--pc-accent);
+  border-color: var(--pc-accent);
+  color: var(--pc-accent-text);
+}
+
+.plainconsent-btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.plainconsent-credit {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--pc-muted);
+}
+
+.plainconsent-credit a {
+  color: var(--pc-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.plainconsent-credit a:hover {
+  color: var(--pc-text);
+}
+
+@media (max-width: 560px) {
+  .plainconsent {
+    padding: 12px;
+  }
+
+  .plainconsent-inner {
+    padding: 16px;
+  }
+
+  .plainconsent-actions {
+    flex-direction: column;
+  }
+
+  .plainconsent-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
