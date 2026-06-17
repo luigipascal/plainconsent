@@ -2,6 +2,7 @@
   "use strict";
 
   var DEFAULT_COFFEE_URL = "https://ko-fi.com/bertaone";
+  var DEFAULT_PROJECT_URL = "https://github.com/luigipascal/plainconsent";
   var DEFAULT_STORAGE_KEY = "plainconsent";
   var SETTINGS_SELECTOR = "[data-plainconsent-settings],[data-cookie-settings]";
 
@@ -9,6 +10,9 @@
     privacyUrl: "/privacy.html",
     storageKey: DEFAULT_STORAGE_KEY,
     googleAnalyticsId: "",
+    googleAnalyticsIds: [],
+    googleAnalyticsOptions: {},
+    projectUrl: DEFAULT_PROJECT_URL,
     consentMode: true,
     categories: { analytics: true },
     texts: {
@@ -18,7 +22,7 @@
       privacyLabel: "Privacy Policy",
       accept: "Accept analytics",
       reject: "Essential only",
-      credit: "Consent by {name} — free & open source — {coffee}",
+      credit: "Powered by {nameLink} — free forever for small sites · built for indie sites, not enterprise — {coffee}",
       creditName: "PlainConsent",
       creditCoffee: "support us on Ko-fi",
     },
@@ -120,15 +124,35 @@
     });
   }
 
-  function loadGoogleAnalytics(gaId) {
-    if (!gaId || global.__plainConsentAnalyticsLoaded) return;
+  function getAnalyticsIds(config) {
+    if (config.googleAnalyticsIds && config.googleAnalyticsIds.length) {
+      return config.googleAnalyticsIds.filter(Boolean);
+    }
+    return config.googleAnalyticsId ? [config.googleAnalyticsId] : [];
+  }
+
+  function loadGoogleAnalytics(config) {
+    var ids = getAnalyticsIds(config);
+    if (!ids.length || global.__plainConsentAnalyticsLoaded) return;
     global.__plainConsentAnalyticsLoaded = true;
     var gtag = ensureDataLayer();
     gtag("js", new Date());
-    gtag("config", gaId);
+    ids.forEach(function (id) {
+      var opts = {};
+      if (config.googleAnalyticsOptions) {
+        opts =
+          config.googleAnalyticsOptions[id] ||
+          (typeof config.googleAnalyticsOptions === "object"
+            ? config.googleAnalyticsOptions
+            : {});
+      }
+      gtag("config", id, opts);
+    });
     var script = document.createElement("script");
     script.async = true;
-    script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(gaId);
+    script.src =
+      "https://www.googletagmanager.com/gtag/js?id=" +
+      encodeURIComponent(ids[0]);
     document.head.appendChild(script);
   }
 
@@ -150,7 +174,7 @@
   function activateCategory(config, category, granted) {
     if (category === "analytics") {
       if (config.consentMode) setConsentModeAnalytics(ensureDataLayer(), granted);
-      if (granted && config.googleAnalyticsId) loadGoogleAnalytics(config.googleAnalyticsId);
+      if (granted && getAnalyticsIds(config).length) loadGoogleAnalytics(config);
     }
     (config.scripts || []).forEach(function (entry) {
       if (entry.category === category && granted) loadScriptEntry(entry);
@@ -205,14 +229,22 @@
   function buildCredit(config) {
     if (!config.credit || config.credit.show === false) return "";
     var coffeeUrl = config.credit.coffeeUrl || DEFAULT_COFFEE_URL;
+    var projectUrl = config.projectUrl || DEFAULT_PROJECT_URL;
     var coffeeLink =
       '<a href="' +
       escapeHtml(coffeeUrl) +
       '" target="_blank" rel="noopener noreferrer">' +
       escapeHtml(config.texts.creditCoffee) +
       "</a>";
+    var nameLink =
+      '<a href="' +
+      escapeHtml(projectUrl) +
+      '" target="_blank" rel="noopener noreferrer">' +
+      escapeHtml(config.texts.creditName) +
+      "</a>";
     var creditText = fillTemplate(config.texts.credit, {
       name: escapeHtml(config.texts.creditName),
+      nameLink: nameLink,
       coffee: coffeeLink,
     });
     return '<p class="plainconsent-credit">' + creditText + "</p>";

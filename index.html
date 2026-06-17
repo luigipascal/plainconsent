@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="PlainConsent — free, open-source cookie consent for small websites. No Cookiebot fees. MIT licensed, forever."
+    />
+    <title>PlainConsent — Cookie consent for normal websites</title>
+    <link rel="stylesheet" href="dist/plainconsent.css" />
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --surface: #121820;
+        --border: #243044;
+        --text: #e8eef7;
+        --muted: #8b9cb3;
+        --accent: #3b82f6;
+        --pc-bg: var(--surface);
+        --pc-border: var(--border);
+        --pc-text: var(--text);
+        --pc-muted: var(--muted);
+        --pc-accent: var(--accent);
+        --pc-accent-text: #fff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+      a { color: var(--accent); }
+      .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+      .hero { padding: 48px 0 32px; }
+      .hero-banner {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        margin-bottom: 28px;
+      }
+      .hero-card {
+        max-width: 320px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        margin-bottom: 20px;
+      }
+      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 12px; line-height: 1.15; }
+      .lead { font-size: 1.125rem; color: var(--muted); max-width: 640px; margin: 0 0 24px; }
+      .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 28px; }
+      .pill {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+      .btn {
+        display: inline-block;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      section { padding: 40px 0; border-top: 1px solid var(--border); }
+      h2 { margin: 0 0 16px; font-size: 1.5rem; }
+      ul { color: var(--muted); padding-left: 1.2rem; }
+      li { margin: 8px 0; }
+      pre {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        overflow-x: auto;
+        font-size: 13px;
+        color: #c9d7ea;
+      }
+      .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .card strong { display: block; margin-bottom: 8px; }
+      footer {
+        padding: 32px 0 48px;
+        color: var(--muted);
+        font-size: 14px;
+        border-top: 1px solid var(--border);
+      }
+    </style>
+    <script>
+      window.plainConsentConfig = {
+        privacyUrl: "#privacy",
+        storageKey: "plainconsent-site",
+        projectUrl: "https://github.com/luigipascal/plainconsent",
+      };
+    </script>
+    <script src="dist/plainconsent.js" defer></script>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <img class="hero-banner" src="brand/banner.png" alt="PlainConsent — free forever for small sites" />
+        <img class="hero-card" src="brand/card.png" alt="PlainConsent brand card" width="320" />
+        <h1>Cookie consent for normal websites</h1>
+        <p class="lead">
+          PlainConsent is a free, open-source banner built for small sites and solo builders —
+          not enterprise compliance theater. Block Google Analytics until opt-in, show a clear banner,
+          and skip the monthly CMP bill.
+        </p>
+        <div class="pill-row">
+          <span class="pill">Free forever</span>
+          <span class="pill">MIT licensed</span>
+          <span class="pill">Built for small sites</span>
+          <span class="pill">No Cookiebot fees</span>
+          <span class="pill">Google Consent Mode v2</span>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/luigipascal/plainconsent">View on GitHub</a>
+          <a class="btn" href="dist/plainconsent.js" download>Download plainconsent.js</a>
+          <a class="btn" href="dist/plainconsent.css" download>Download plainconsent.css</a>
+          <a class="btn" href="https://ko-fi.com/bertaone" target="_blank" rel="noopener">Support on Ko-fi</a>
+        </div>
+        <p style="color: var(--muted); font-size: 14px;">
+          Powered by PlainConsent on this page.
+          <a href="#" data-plainconsent-settings>Cookie settings</a>
+        </p>
+      </div>
+    </header>
+
+    <section>
+      <div class="wrap">
+        <h2>Why PlainConsent?</h2>
+        <div class="grid">
+          <div class="card">
+            <strong>Honest scope</strong>
+            You list your scripts. We don’t pretend to auto-scan 500 trackers.
+          </div>
+          <div class="card">
+            <strong>Free forever</strong>
+            MIT license. No tiers, no page-count pricing, no surprise renewals.
+          </div>
+          <div class="card">
+            <strong>Small-site first</strong>
+            Made for marketing pages, indie products, and static sites — not ad-tech stacks.
+          </div>
+          <div class="card">
+            <strong>Two-minute setup</strong>
+            Drop in two files or one CDN snippet. Add a footer link. Done.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2>Install in 60 seconds</h2>
+        <pre>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.css" /&gt;
+&lt;script&gt;
+  window.plainConsentConfig = {
+    privacyUrl: "/privacy.html",
+    googleAnalyticsId: "G-XXXXXXXXXX",
+    projectUrl: "https://github.com/luigipascal/plainconsent",
+  };
+&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/luigipascal/plainconsent@main/dist/plainconsent.js" defer&gt;&lt;/script&gt;</pre>
+        <p style="color: var(--muted);">
+          Add <code>&lt;a href="#" data-plainconsent-settings&gt;Cookie settings&lt;/a&gt;</code> in your footer so visitors can change their choice.
+        </p>
+      </div>
+    </section>
+
+    <section id="privacy">
+      <div class="wrap">
+        <h2>Privacy on this demo site</h2>
+        <p style="color: var(--muted);">
+          This marketing page does not load Google Analytics unless you opt in through the banner.
+          PlainConsent stores your choice in your browser. See the
+          <a href="https://github.com/luigipascal/plainconsent/blob/main/README.md">README</a> for integration and legal notes.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          PlainConsent · MIT · Copyright © 2026 Rondanini Publishing Ltd ·
+          <a href="https://github.com/luigipascal/plainconsent">GitHub</a> ·
+          <a href="https://ko-fi.com/bertaone">Ko-fi</a> ·
+          <a href="#" data-plainconsent-settings>Cookie settings</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
