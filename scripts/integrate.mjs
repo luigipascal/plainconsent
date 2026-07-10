@@ -30,10 +30,20 @@ const GTAG_CONSENT_MODE =
 const GTAG_INLINE_BEFORE_SRC =
   /<script>\s*window\.dataLayer[\s\S]*?gtag\s*\(\s*['"]config['"][\s\S]*?<\/script>\s*<script async src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^>]*><\/script>\s*/gi;
 const GTAG_ORPHAN_COMMENT = /<!--\s*Google tag \(gtag\.js\)\s*-->\s*/gi;
+const GTAG_STANDALONE =
+  /<script[^>]*googletagmanager\.com\/gtag\/js[^>]*><\/script>\s*/gi;
+const GTAG_CONFIG_SCRIPT =
+  /<script[^>]*src=["'][^"']*gtag-config\.js["'][^>]*><\/script>\s*/gi;
+const COOKIE_CONSENT_SCRIPT =
+  /<script[^>]*src=["'][^"']*cookie-consent\.js["'][^>]*><\/script>\s*/gi;
+const MS_CLARITY_BLOCK =
+  /<!--\s*Microsoft Clarity\s*-->[\s\S]*?<\/script>\s*/gi;
 const HOMEMADE_BANNER =
   /<!--\s*Cookie Banner\s*-->[\s\S]*?<!--\s*End Cookie Banner\s*-->\s*/gi;
 const HOMEMADE_BANNER2 =
   /<!--\s*Cookie Consent Banner\s*-->[\s\S]*?(?=<!--|<\/head>|<\/body)/gi;
+const MERGE_CONFLICT =
+  /<<<<<<< HEAD[\s\S]*?=======[\s\S]*?>>>>>>>[^\n]*\n?/g;
 
 function stripLegacyGtag(html) {
   let next = html;
@@ -42,12 +52,54 @@ function stripLegacyGtag(html) {
   next = next.replace(GTAG_CONSENT_MODE, "");
   next = next.replace(GTAG_INLINE_BEFORE_SRC, "");
   next = next.replace(GTAG_ORPHAN_COMMENT, "");
+  next = next.replace(GTAG_STANDALONE, "");
+  next = next.replace(GTAG_CONFIG_SCRIPT, "");
+  next = next.replace(COOKIE_CONSENT_SCRIPT, "");
+  next = next.replace(MS_CLARITY_BLOCK, "");
   next = next.replace(HOMEMADE_BANNER, "");
   next = next.replace(HOMEMADE_BANNER2, "");
   GTAG_BLOCK.lastIndex = 0;
   GTAG_BLOCK_NO_END.lastIndex = 0;
   GTAG_CONSENT_MODE.lastIndex = 0;
   GTAG_INLINE_BEFORE_SRC.lastIndex = 0;
+  GTAG_STANDALONE.lastIndex = 0;
+  return next;
+}
+
+function fixMergeConflicts(html) {
+  return html.replace(MERGE_CONFLICT, (block) => {
+    const head = block.match(/<<<<<<< HEAD\s*([\s\S]*?)=======/);
+    return head ? head[1] : "";
+  });
+}
+
+function dedupePlainConsentBlocks(html) {
+  const mark = "<!-- PlainConsent";
+  let first = html.indexOf(mark);
+  if (first === -1) return html;
+  let next = html;
+  let searchFrom = first + 1;
+  while (true) {
+    const second = next.indexOf(mark, searchFrom);
+    if (second === -1) break;
+    const endScript = next.indexOf("plainconsent.js", second);
+    if (endScript === -1) break;
+    const close = next.indexOf("</script>", endScript);
+    if (close === -1) break;
+    const blockEnd = close + "</script>".length;
+    const maybeLink = next.slice(second, blockEnd);
+    const linkStart = maybeLink.lastIndexOf('<link rel="stylesheet"');
+    const removeFrom = linkStart >= 0 ? second + linkStart : second;
+    next = next.slice(0, removeFrom) + next.slice(blockEnd).replace(/^\s*\n/, "");
+    searchFrom = removeFrom;
+  }
+  return next;
+}
+
+function dedupeIntegratedHtml(html) {
+  let next = fixMergeConflicts(html);
+  next = dedupePlainConsentBlocks(next);
+  next = stripLegacyGtag(next);
   return next;
 }
 const PLAINCONSENT_MARK = "plainconsent.js";
@@ -147,6 +199,7 @@ function buildSnippet({ storageKey, privacyUrl, gaIds }) {
 
 function integrateHtml(root, filePath, html, options) {
   const keysOnly = options && options.keysOnly;
+  const dedupeOnly = options && options.dedupeOnly;
   if (keysOnly) {
     return fixStorageKeyHtml(root, html);
   }
@@ -154,9 +207,26 @@ function integrateHtml(root, filePath, html, options) {
   const hadPlainConsent =
     html.includes(PLAINCONSENT_MARK) || html.includes("plainConsentConfig");
   if (hadPlainConsent) {
-    const keyFix = fixStorageKeyHtml(root, html);
-    if (keyFix.changed) return { changed: true, html: keyFix.html, keyFix: keyFix.from };
+    let next = dedupeIntegratedHtml(html);
+    const keyFix = fixStorageKeyHtml(root, next);
+    if (keyFix.changed) next = keyFix.html;
+    const changed = next !== html;
+    if (changed) {
+      return {
+        changed: true,
+        html: next,
+        keyFix: keyFix.changed ? keyFix.from : undefined,
+        dedupe: dedupeOnly || undefined,
+      };
+    }
     return { changed: false, reason: "already-integrated" };
+  }
+
+  if (dedupeOnly) {
+    const next = dedupeIntegratedHtml(html);
+    return next !== html
+      ? { changed: true, html: next, dedupe: true }
+      : { changed: false, reason: "nothing-to-dedupe" };
   }
 
   const gaIdsBefore = extractGaIds(html);
@@ -228,12 +298,44 @@ function fixCdnUrls(html) {
   return next === html ? { changed: false, html } : { changed: true, html: next };
 }
 
+function buildAddSnippet({ storageKey, privacyUrl, gaIds = [], scripts = [] }) {
+  const idField =
+    gaIds.length === 0
+      ? ""
+      : gaIds.length === 1
+        ? `googleAnalyticsId: ${JSON.stringify(gaIds[0])},\n        `
+        : `googleAnalyticsIds: ${JSON.stringify(gaIds)},\n        `;
+  const scriptsField =
+    scripts.length > 0
+      ? `scripts: ${JSON.stringify(scripts, null, 8).replace(/\n/g, "\n        ")},\n        `
+      : "";
+  return (
+    `<!-- PlainConsent — ${SITE_URL} -->\n` +
+    `    <link rel="stylesheet" href="${CDN_CSS}" />\n` +
+    `    <script>\n` +
+    `      window.plainConsentConfig = {\n` +
+    `        privacyUrl: ${JSON.stringify(privacyUrl)},\n` +
+    `        storageKey: ${JSON.stringify(storageKey)},\n` +
+    `        ${idField}${scriptsField}` +
+    `        projectUrl: "${PROJECT_URL}"\n` +
+    `      };\n` +
+    `    </script>\n` +
+    `    <script src="${CDN_JS}" defer></script>\n`
+  );
+}
+
 async function main() {
   const root = process.argv[2];
   const dryRun = process.argv.includes("--dry-run");
   const cdnOnly = process.argv.includes("--cdn-only");
+  const dedupeOnly = process.argv.includes("--dedupe");
+  const addOnly = process.argv.includes("--add");
+  const storageKeyFlag = process.argv.find((a) => a.startsWith("--storage-key="));
+  const gaFlag = process.argv.find((a) => a.startsWith("--ga="));
   if (!root) {
-    console.error("Usage: node scripts/integrate.mjs <directory> [--dry-run]");
+    console.error(
+      "Usage: node scripts/integrate.mjs <directory> [--dry-run] [--dedupe] [--add] [--storage-key=x] [--ga=G-XXX]"
+    );
     process.exit(1);
   }
 
@@ -245,7 +347,19 @@ async function main() {
     let changed = false;
     let note = "";
 
-    if (cdnOnly) {
+    if (addOnly && !htmlOut.includes(PLAINCONSENT_MARK)) {
+      const gaIds = gaFlag ? [gaFlag.split("=")[1]] : extractGaIds(htmlOut);
+      const snippet = buildAddSnippet({
+        storageKey: storageKeyFlag ? storageKeyFlag.split("=")[1] : siteStorageKey(root),
+        privacyUrl: guessPrivacyUrl(file),
+        gaIds,
+      });
+      if (htmlOut.includes("</head>")) {
+        htmlOut = htmlOut.replace("</head>", snippet + "  </head>");
+        changed = true;
+        note = " (added-plainconsent)";
+      }
+    } else if (cdnOnly) {
       const cdnFix = fixCdnUrls(htmlOut);
       if (cdnFix.changed) {
         htmlOut = cdnFix.html;
@@ -259,7 +373,7 @@ async function main() {
         note += ` (storageKey: ${keyFix.from} → ${keyFix.to})`;
       }
     } else {
-      let result = integrateHtml(root, file, htmlOut);
+      let result = integrateHtml(root, file, htmlOut, { dedupeOnly });
       htmlOut = result.html ?? htmlOut;
       if (result.changed) {
         changed = true;

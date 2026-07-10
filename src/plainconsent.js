@@ -309,12 +309,17 @@
 
   function init() {
     try {
+      if (document.getElementById("plainconsent-banner")) return;
+
       if (!document.body) {
         if (document.readyState === "loading") {
           document.addEventListener("DOMContentLoaded", init, { once: true });
         }
         return;
       }
+
+      if (global.__plainConsentInitialized) return;
+      global.__plainConsentInitialized = true;
 
       var config = resolveConfig();
 
