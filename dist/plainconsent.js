@@ -18,7 +18,7 @@
     texts: {
       title: "Cookies on this site",
       description:
-        "We use essential cookies so the site works. Analytics cookies (e.g. Google Analytics) load only if you opt in. See our {privacy} for details.",
+        "We use essential cookies so the site works. Personalized analytics cookies load only if you opt in; cookieless measurement may still run. See our {privacy} for details.",
       privacyLabel: "Privacy Policy",
       accept: "Accept analytics",
       reject: "Essential only",
@@ -174,7 +174,10 @@
   function activateCategory(config, category, granted) {
     if (category === "analytics") {
       if (config.consentMode) setConsentModeAnalytics(ensureDataLayer(), granted);
-      if (granted && getAnalyticsIds(config).length) loadGoogleAnalytics(config);
+      // Always load gtag when IDs are set. Consent Mode defaults keep
+      // analytics cookieless until the user opts in; previously GA never
+      // loaded until Accept, so silent streams reported zero hits.
+      if (getAnalyticsIds(config).length) loadGoogleAnalytics(config);
     }
     (config.scripts || []).forEach(function (entry) {
       if (entry.category === category && granted) loadScriptEntry(entry);
@@ -324,6 +327,8 @@
       var config = resolveConfig();
 
       if (config.consentMode) setConsentModeDefault(ensureDataLayer());
+      // Start measurement under Consent Mode immediately (cookieless until accept).
+      if (getAnalyticsIds(config).length) loadGoogleAnalytics(config);
       if (!config.noStyles) injectStylesheet();
 
       var consent = readConsent(config.storageKey);
@@ -339,6 +344,8 @@
         return;
       }
 
+      // Pending choice: keep analytics_storage denied (cookieless) until Accept.
+      applyConsent(config, { analytics: false });
       showBanner(banner);
     } catch (err) {
       if (typeof console !== "undefined" && console.error) {
@@ -356,7 +363,7 @@
       var config = resolveConfig();
       return readConsent(config.storageKey);
     },
-    version: "1.1.2",
+    version: "1.1.3",
   };
 
   if (document.readyState === "loading") {
