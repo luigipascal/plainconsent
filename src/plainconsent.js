@@ -18,7 +18,7 @@
     texts: {
       title: "Cookies on this site",
       description:
-        "We use essential cookies so the site works. Personalized analytics cookies load only if you opt in; cookieless measurement may still run. See our {privacy} for details.",
+        "We use essential cookies so the site works. Non-essential analytics load only if you opt in. See our {privacy} for details.",
       privacyLabel: "Privacy Policy",
       accept: "Accept analytics",
       reject: "Essential only",
@@ -174,10 +174,9 @@
   function activateCategory(config, category, granted) {
     if (category === "analytics") {
       if (config.consentMode) setConsentModeAnalytics(ensureDataLayer(), granted);
-      // Always load gtag when IDs are set. Consent Mode defaults keep
-      // analytics cookieless until the user opts in; previously GA never
-      // loaded until Accept, so silent streams reported zero hits.
-      if (getAnalyticsIds(config).length) loadGoogleAnalytics(config);
+      // UK PECR / UK GDPR: do not load GA (even Consent Mode cookieless)
+      // until the visitor explicitly accepts analytics.
+      if (granted && getAnalyticsIds(config).length) loadGoogleAnalytics(config);
     }
     (config.scripts || []).forEach(function (entry) {
       if (entry.category === category && granted) loadScriptEntry(entry);
@@ -327,8 +326,6 @@
       var config = resolveConfig();
 
       if (config.consentMode) setConsentModeDefault(ensureDataLayer());
-      // Start measurement under Consent Mode immediately (cookieless until accept).
-      if (getAnalyticsIds(config).length) loadGoogleAnalytics(config);
       if (!config.noStyles) injectStylesheet();
 
       var consent = readConsent(config.storageKey);
@@ -344,7 +341,7 @@
         return;
       }
 
-      // Pending choice: keep analytics_storage denied (cookieless) until Accept.
+      // Pending choice: Consent Mode stays denied; GA scripts stay unloaded.
       applyConsent(config, { analytics: false });
       showBanner(banner);
     } catch (err) {
@@ -363,7 +360,7 @@
       var config = resolveConfig();
       return readConsent(config.storageKey);
     },
-    version: "1.1.3",
+    version: "1.2.0",
   };
 
   if (document.readyState === "loading") {

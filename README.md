@@ -18,7 +18,7 @@ Every banner shows: **Powered by PlainConsent — free forever for small sites �
 
 - Shows a bottom banner on first visit
 - **Blocks Google Analytics** until the visitor clicks “Accept analytics”
-- Sets **Google Consent Mode v2** defaults to `denied` before consent
+- Sets **Google Consent Mode v2** defaults to `denied` before consent (and does **not** load the gtag script until Accept)
 - Stores the choice in `localStorage` (configurable key)
 - Provides a **Cookie settings** link to reopen the banner
 - Links to [plainconsent.berta.one](https://plainconsent.berta.one) and optional **Ko-fi** support line

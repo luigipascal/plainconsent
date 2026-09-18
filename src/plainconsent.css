@@ -83,13 +83,15 @@
 }
 
 .plainconsent-btn-primary {
-  background: var(--pc-accent);
-  border-color: var(--pc-accent);
-  color: var(--pc-accent-text);
+  /* Equal choice: Accept must not visually dominate Reject (ICO / PECR). */
+  background: transparent;
+  border-color: var(--pc-border);
+  color: var(--pc-text);
 }
 
 .plainconsent-btn-primary:hover {
-  filter: brightness(1.08);
+  border-color: var(--pc-muted);
+  filter: none;
 }
 
 .plainconsent-credit {
